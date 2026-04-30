@@ -1,6 +1,5 @@
 'use client'
 import Link from 'next/link'
-import { Settings } from 'lucide-react'
 
 interface Show { id: string; slug: string; hostId: string }
 interface Props {

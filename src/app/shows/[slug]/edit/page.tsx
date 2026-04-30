@@ -125,7 +125,7 @@ export default function EditShowPage() {
   if (!user || (show && show.hostId !== user.id)) {
     return (
       <div className="text-center py-24">
-        <p className="text-ps-secondary text-sm">You're not authorized to manage this show.</p>
+        <p className="text-ps-secondary text-sm">You&apos;re not authorized to manage this show.</p>
       </div>
     )
   }
