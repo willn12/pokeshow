@@ -1,101 +1,104 @@
-import Image from "next/image";
+import Link from 'next/link'
+import { prisma } from '@/lib/prisma'
+import { formatDate } from '@/lib/utils'
+import { MapPin, Calendar, Users, MessageSquare, ArrowRight } from 'lucide-react'
 
-export default function Home() {
+export const revalidate = 0
+
+export default async function HomePage() {
+  const shows = await prisma.show.findMany({
+    where: { published: true },
+    include: {
+      host: { select: { name: true } },
+      _count: { select: { vendors: true, forumPosts: true } },
+    },
+    orderBy: { createdAt: 'desc' },
+  })
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div>
+      {/* Hero */}
+      <section className="text-center py-20 mb-16">
+        <div className="inline-flex items-center gap-2 bg-ps-accentLight text-ps-accent text-xs font-semibold px-3 py-1.5 rounded-full mb-6 tracking-wide uppercase">
+          Pokemon Card Shows
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        <h1 className="text-6xl font-bold tracking-tight mb-5 text-balance leading-tight">
+          Find shows.<br />Meet vendors.<br />
+          <span className="text-ps-accent">Get the cards you want.</span>
+        </h1>
+        <p className="text-ps-secondary text-lg max-w-lg mx-auto mb-10 leading-relaxed">
+          Post exactly what you&apos;re looking for and what you&apos;ll pay — vendors at the show will find you.
+        </p>
+        <div className="flex justify-center gap-3">
+          <Link
+            href="/auth/register"
+            className="flex items-center gap-2 bg-ps-accent hover:bg-ps-accentHover text-white px-6 py-3 rounded-full font-semibold transition-colors text-sm"
+          >
+            Get started <ArrowRight size={15} />
+          </Link>
+          <Link
+            href="#shows"
+            className="flex items-center gap-2 bg-white hover:bg-ps-surface2 text-ps-text px-6 py-3 rounded-full font-semibold transition-colors text-sm shadow-soft border border-ps-borderLight"
+          >
+            Browse shows
+          </Link>
+        </div>
+      </section>
+
+      {/* Shows grid */}
+      <section id="shows">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold tracking-tight">Upcoming Shows</h2>
+          <Link href="/shows/new" className="text-sm text-ps-accent hover:text-ps-accentHover font-medium transition-colors">
+            Host a show →
+          </Link>
+        </div>
+
+        {shows.length === 0 ? (
+          <div className="bg-white rounded-3xl border border-ps-borderLight p-16 text-center shadow-card">
+            <div className="text-5xl mb-4">🎴</div>
+            <p className="text-ps-secondary text-lg mb-2 font-medium">No shows yet</p>
+            <p className="text-ps-muted text-sm mb-6">Be the first to host a Pokemon card show.</p>
+            <Link href="/shows/new" className="inline-flex items-center gap-2 bg-ps-accent hover:bg-ps-accentHover text-white px-5 py-2.5 rounded-full text-sm font-medium transition-colors">
+              Host the first one <ArrowRight size={14} />
+            </Link>
+          </div>
+        ) : (
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {shows.map((show) => (
+              <Link key={show.id} href={`/shows/${show.slug}`}>
+                <div className="bg-white border border-ps-borderLight rounded-3xl overflow-hidden hover:shadow-card-hover transition-all duration-300 group cursor-pointer">
+                  {show.flierUrl ? (
+                    <img src={show.flierUrl} alt={show.name} className="w-full h-52 object-cover" />
+                  ) : (
+                    <div className="w-full h-52 bg-gradient-to-br from-red-50 to-ps-surface2 flex items-center justify-center">
+                      <span className="text-5xl opacity-60">🎴</span>
+                    </div>
+                  )}
+                  <div className="p-6">
+                    <h3 className="font-semibold text-lg tracking-tight group-hover:text-ps-accent transition-colors mb-2">{show.name}</h3>
+                    <div className="flex items-center gap-1.5 text-ps-secondary text-sm mb-1">
+                      <MapPin size={13} className="shrink-0" />
+                      <span>{show.location}</span>
+                    </div>
+                    {show.date && (
+                      <div className="flex items-center gap-1.5 text-ps-secondary text-sm mb-4">
+                        <Calendar size={13} className="shrink-0" />
+                        <span>{formatDate(show.date)}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-4 text-sm text-ps-muted pt-4 border-t border-ps-borderLight">
+                      <span className="flex items-center gap-1.5"><Users size={13} /> {show._count.vendors} vendors</span>
+                      <span className="flex items-center gap-1.5"><MessageSquare size={13} /> {show._count.forumPosts} posts</span>
+                      <span className="ml-auto text-xs">by {show.host.name}</span>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
-  );
+  )
 }

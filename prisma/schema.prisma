@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  password     String
+  name         String
+  businessName String?
+  bio          String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  hostedShows      Show[]
+  vendorShips      ShowVendor[]
+  forumPosts       ForumPost[]
+  forumVotes       ForumVote[]
+  sentMessages     DirectMessage[] @relation("SentMessages")
+  receivedMessages DirectMessage[] @relation("ReceivedMessages")
+}
+
+model Show {
+  id                 String    @id @default(cuid())
+  slug               String    @unique
+  name               String
+  location           String
+  date               DateTime?
+  description        String?
+  hostId             String
+  host               User      @relation(fields: [hostId], references: [id])
+  flierUrl           String?
+  bannerUrl          String?
+  vendorMapUrl       String?
+  published          Boolean   @default(true)
+  applicationsOpenAt DateTime?
+  theme              String    @default("red")
+  announcementBanner String?
+  showCountdown      Boolean   @default(true)
+  schedule           Json?
+  logistics          String?
+  faq                Json?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  vendors    ShowVendor[]
+  forumPosts ForumPost[]
+  messages   DirectMessage[]
+}
+
+model ShowVendor {
+  id                String   @id @default(cuid())
+  showId            String
+  show              Show     @relation(fields: [showId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User     @relation(fields: [userId], references: [id])
+  status            String   @default("pending")
+  inviteToken       String?  @unique
+  tableNumber       String?
+  inventoryType     String?
+  estimatedValue    Float?
+  instagramUrl      String?
+  websiteUrl        String?
+  applicationNote   String?
+  createdAt         DateTime @default(now())
+
+  @@unique([showId, userId])
+}
+
+model ForumPost {
+  id        String   @id @default(cuid())
+  showId    String
+  show      Show     @relation(fields: [showId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  content   String
+  tag       String   @default("general")
+  parentId  String?
+  parent    ForumPost?  @relation("Replies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   ForumPost[] @relation("Replies")
+  createdAt DateTime @default(now())
+
+  messages DirectMessage[]
+  votes    ForumVote[]
+}
+
+model ForumVote {
+  id        String    @id @default(cuid())
+  postId    String
+  post      ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  createdAt DateTime  @default(now())
+
+  @@unique([postId, userId])
+}
+
+model DirectMessage {
+  id          String     @id @default(cuid())
+  senderId    String
+  sender      User       @relation("SentMessages", fields: [senderId], references: [id])
+  recipientId String
+  recipient   User       @relation("ReceivedMessages", fields: [recipientId], references: [id])
+  showId      String
+  show        Show       @relation(fields: [showId], references: [id])
+  forumPostId String?
+  forumPost   ForumPost? @relation(fields: [forumPostId], references: [id])
+  content     String
+  readAt      DateTime?
+  createdAt   DateTime   @default(now())
+}
