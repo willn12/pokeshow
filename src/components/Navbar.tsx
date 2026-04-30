@@ -18,9 +18,13 @@ export default function Navbar() {
   return (
     <nav className="bg-white/80 backdrop-blur-xl border-b border-ps-borderLight sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 flex items-center justify-between h-14">
-        <Link href="/" className="flex items-center gap-1 font-bold text-base tracking-tight">
-          <span className="text-ps-accent">Card Show</span>
-          <span className="text-ps-text">&nbsp;Central</span>
+        <Link href="/" className="flex items-center gap-2.5 group">
+          <div className="w-7 h-7 bg-ps-accent group-hover:bg-ps-accentHover rounded-lg flex items-center justify-center shrink-0 transition-colors">
+            <span className="text-white text-sm font-black select-none leading-none">♦</span>
+          </div>
+          <span className="font-black text-[17px] tracking-tight leading-none text-ps-text">
+            Card Show <span className="text-ps-accent">Central</span>
+          </span>
         </Link>
 
         <div className="hidden md:flex items-center gap-7">
