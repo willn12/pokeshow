@@ -42,7 +42,7 @@ export default function RegisterPage() {
     <div className="max-w-md mx-auto mt-16">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold tracking-tight mb-2">Create an account</h1>
-        <p className="text-ps-secondary text-sm">Join the PokeShow community</p>
+        <p className="text-ps-secondary text-sm">Join the Card Show Central community</p>
       </div>
 
       <div className="bg-white rounded-3xl border border-ps-borderLight shadow-card p-8">

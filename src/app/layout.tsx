@@ -7,8 +7,8 @@ import Navbar from '@/components/Navbar'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'PokeShow — Pokemon Card Show Platform',
-  description: 'Find and host Pokemon card shows near you',
+  title: 'Card Show Central — The Hub for Every Card Show',
+  description: 'Find and host Pokemon card shows near you. Vendor applications, community boards, and everything attendees need in one place.',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

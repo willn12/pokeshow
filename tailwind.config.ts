@@ -39,6 +39,13 @@ const config: Config = {
     'from-slate-100', 'to-gray-50',
     'from-violet-50', 'to-purple-50',
     'via-white',
+    // card hero gradients
+    'from-red-500', 'to-rose-600',
+    'from-emerald-500', 'to-green-600',
+    'from-amber-400', 'to-orange-500',
+    'from-slate-500', 'to-slate-700',
+    'from-violet-500', 'to-purple-700',
+    // badge classes
     'bg-red-50', 'text-red-600', 'border-red-200',
     'bg-blue-50', 'text-blue-900', 'border-blue-200',
     'bg-emerald-50', 'text-emerald-700', 'border-emerald-200',

@@ -18,9 +18,9 @@ export default function Navbar() {
   return (
     <nav className="bg-white/80 backdrop-blur-xl border-b border-ps-borderLight sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 flex items-center justify-between h-14">
-        <Link href="/" className="flex items-center gap-1.5 font-semibold text-lg tracking-tight">
-          <span className="text-ps-accent">Poke</span>
-          <span className="text-ps-text">Show</span>
+        <Link href="/" className="flex items-center gap-1 font-bold text-base tracking-tight">
+          <span className="text-ps-accent">Card Show</span>
+          <span className="text-ps-text">&nbsp;Central</span>
         </Link>
 
         <div className="hidden md:flex items-center gap-7">

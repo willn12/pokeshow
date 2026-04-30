@@ -30,7 +30,7 @@ export default function LoginPage() {
     <div className="max-w-md mx-auto mt-16">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold tracking-tight mb-2">Welcome back</h1>
-        <p className="text-ps-secondary text-sm">Sign in to your PokeShow account</p>
+        <p className="text-ps-secondary text-sm">Sign in to your Card Show Central account</p>
       </div>
 
       <div className="bg-white rounded-3xl border border-ps-borderLight shadow-card p-8">
