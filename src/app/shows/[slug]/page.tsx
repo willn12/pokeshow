@@ -44,6 +44,16 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
     applicationStatus = vendorRecord?.status ?? null
   }
 
+  const vendorUserIds = show.vendors.map((v) => v.userId)
+  const inventoryItems = vendorUserIds.length > 0
+    ? await prisma.inventoryItem.findMany({
+        where: { userId: { in: vendorUserIds } },
+        include: { user: { select: { id: true, name: true, businessName: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+      })
+    : []
+
   const theme = getTheme(show.theme)
   const schedule = (show.schedule as ScheduleItem[] | null) ?? []
   const faq = (show.faq as FAQItem[] | null) ?? []
@@ -85,7 +95,7 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
                 {show.description && (
                   <p className="text-white/70 text-sm leading-relaxed max-w-xl mb-5">{show.description}</p>
                 )}
-                <ShowActions show={show} isHost={isHost} isVendor={isVendor} userId={session?.userId} applicationStatus={applicationStatus} />
+                <ShowActions show={show} isHost={isHost} isVendor={isVendor} userId={session?.userId} applicationStatus={applicationStatus} applicationsOpen={show.applicationsOpen} />
               </div>
               {show.flierUrl && (
                 <div className="absolute top-6 right-8 w-28 md:w-36 hidden sm:block">
@@ -116,7 +126,7 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
                   {show.description && (
                     <p className="text-white/75 text-sm leading-relaxed max-w-lg mb-6">{show.description}</p>
                   )}
-                  <ShowActions show={show} isHost={isHost} isVendor={isVendor} userId={session?.userId} applicationStatus={applicationStatus} />
+                  <ShowActions show={show} isHost={isHost} isVendor={isVendor} userId={session?.userId} applicationStatus={applicationStatus} applicationsOpen={show.applicationsOpen} />
                 </div>
                 <div className="shrink-0 w-full md:w-56">
                   <img src={show.flierUrl} alt={show.name} className="w-full rounded-2xl shadow-2xl rotate-1 border-2 border-white/20" />
@@ -143,7 +153,7 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
               {show.description && (
                 <p className="text-ps-secondary text-sm leading-relaxed max-w-2xl mb-6">{show.description}</p>
               )}
-              <ShowActions show={show} isHost={isHost} isVendor={isVendor} userId={session?.userId} applicationStatus={applicationStatus} />
+              <ShowActions show={show} isHost={isHost} isVendor={isVendor} userId={session?.userId} applicationStatus={applicationStatus} applicationsOpen={show.applicationsOpen} />
             </div>
           )}
         </div>
@@ -200,6 +210,7 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
         forumPostCount={show._count.forumPosts}
         isVendor={isVendor}
         userId={session?.userId}
+        inventoryItems={inventoryItems}
       />
 
     </div>

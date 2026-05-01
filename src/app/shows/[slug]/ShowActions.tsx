@@ -8,24 +8,13 @@ interface Props {
   isVendor: boolean
   userId?: string
   applicationStatus?: string | null
+  applicationsOpen: boolean
 }
 
-export default function ShowActions({ show, isHost, isVendor, userId, applicationStatus }: Props) {
-  if (isHost) {
-    return null
-  }
+export default function ShowActions({ show, isHost, isVendor, userId, applicationStatus, applicationsOpen }: Props) {
+  if (isHost) return null
 
-  if (!userId) {
-    return (
-      <Link
-        href="/auth/register"
-        className="bg-ps-accent hover:bg-ps-accentHover text-white px-5 py-2 rounded-full text-sm font-medium transition-colors"
-      >
-        Sign up as Vendor
-      </Link>
-    )
-  }
-
+  // Already have a relationship with this show — always show status regardless of open/closed
   if (isVendor || applicationStatus === 'approved') {
     return (
       <span className="flex items-center gap-1.5 text-sm text-green-600 font-medium bg-green-50 border border-green-200 px-4 py-2 rounded-xl">
@@ -47,6 +36,27 @@ export default function ShowActions({ show, isHost, isVendor, userId, applicatio
       <span className="flex items-center gap-1.5 text-sm text-red-600 font-medium bg-red-50 border border-red-200 px-4 py-2 rounded-xl">
         ✗ Application not accepted
       </span>
+    )
+  }
+
+  // Applications are closed — no new applications accepted
+  if (!applicationsOpen) {
+    return (
+      <span className="flex items-center gap-1.5 text-sm text-ps-secondary font-medium bg-ps-surface2 border border-ps-border px-4 py-2 rounded-xl">
+        🔒 Applications closed
+      </span>
+    )
+  }
+
+  // Not logged in
+  if (!userId) {
+    return (
+      <Link
+        href="/auth/register"
+        className="bg-ps-accent hover:bg-ps-accentHover text-white px-5 py-2 rounded-full text-sm font-medium transition-colors"
+      >
+        Sign up as Vendor
+      </Link>
     )
   }
 

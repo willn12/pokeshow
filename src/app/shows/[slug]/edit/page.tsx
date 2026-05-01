@@ -42,6 +42,9 @@ export default function EditShowPage() {
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [saveError, setSaveError] = useState('')
 
+  const [applicationsOpen, setApplicationsOpen] = useState(true)
+  const [togglingApps, setTogglingApps] = useState(false)
+
   const [showInvite, setShowInvite] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteResult, setInviteResult] = useState<{ ok: boolean; msg: string } | null>(null)
@@ -53,6 +56,7 @@ export default function EditShowPage() {
       .then((r) => r.json())
       .then((data) => {
         setShow(data)
+        setApplicationsOpen(data.applicationsOpen ?? true)
         setForm({
           name: data.name ?? '',
           location: data.location ?? '',
@@ -110,6 +114,18 @@ export default function EditShowPage() {
     } finally {
       setInviting(false)
     }
+  }
+
+  async function handleToggleApplications() {
+    const next = !applicationsOpen
+    setApplicationsOpen(next)
+    setTogglingApps(true)
+    await fetch(`/api/shows/${slug}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ applicationsOpen: next }),
+    })
+    setTogglingApps(false)
   }
 
   const input = 'w-full bg-ps-surface2 border border-ps-border rounded-xl px-4 py-2.5 text-ps-text text-sm focus:outline-none focus:border-ps-accent focus:ring-2 focus:ring-ps-accentLight transition-all placeholder:text-ps-muted'
@@ -259,23 +275,45 @@ export default function EditShowPage() {
       {/* VENDORS TAB */}
       {activeTab === 'vendors' && (
         <div className="bg-white border border-ps-borderLight rounded-3xl shadow-card overflow-hidden">
-          <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-ps-borderLight">
-            <div>
-              <h2 className="font-semibold text-ps-text">Vendor Applications</h2>
-              <p className="text-xs text-ps-muted mt-0.5">Review applicants and manage your roster</p>
+          <div className="px-6 py-4 border-b border-ps-borderLight">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div>
+                <h2 className="font-semibold text-ps-text">Vendor Applications</h2>
+                <p className="text-xs text-ps-muted mt-0.5">Review applicants and manage your roster</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setShowInvite((v) => !v); setInviteResult(null) }}
+                className={`flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl border transition-all shrink-0 ${
+                  showInvite
+                    ? 'bg-ps-surface2 border-ps-border text-ps-secondary'
+                    : 'bg-ps-accent border-transparent text-white hover:bg-ps-accentHover'
+                }`}
+              >
+                <UserPlus size={13} />
+                <span className="hidden sm:inline">Invite Vendor</span>
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => { setShowInvite((v) => !v); setInviteResult(null) }}
-              className={`flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl border transition-all shrink-0 ${
-                showInvite
-                  ? 'bg-ps-surface2 border-ps-border text-ps-secondary'
-                  : 'bg-ps-accent border-transparent text-white hover:bg-ps-accentHover'
-              }`}
-            >
-              <UserPlus size={13} />
-              <span className="hidden sm:inline">Invite Vendor</span>
-            </button>
+
+            {/* Applications open/closed toggle */}
+            <div className={`flex items-center justify-between rounded-xl px-4 py-3 border ${applicationsOpen ? 'bg-green-50 border-green-200' : 'bg-ps-surface2 border-ps-borderLight'}`}>
+              <div>
+                <p className={`text-xs font-bold ${applicationsOpen ? 'text-green-700' : 'text-ps-secondary'}`}>
+                  {applicationsOpen ? '✓ Applications are open' : '🔒 Applications are closed'}
+                </p>
+                <p className={`text-xs mt-0.5 ${applicationsOpen ? 'text-green-600/70' : 'text-ps-muted'}`}>
+                  {applicationsOpen ? 'Vendors can apply to your show' : 'No new applications will be accepted'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleToggleApplications}
+                disabled={togglingApps}
+                className={`relative w-11 h-6 rounded-full transition-colors shrink-0 disabled:opacity-60 ${applicationsOpen ? 'bg-green-500' : 'bg-ps-border'}`}
+              >
+                <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${applicationsOpen ? 'translate-x-5' : 'translate-x-0'}`} />
+              </button>
+            </div>
           </div>
 
           {showInvite && (

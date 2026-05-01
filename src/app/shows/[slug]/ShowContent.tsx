@@ -3,6 +3,7 @@ import { useState } from 'react'
 import Forum from '@/components/Forum'
 import Countdown from '@/components/Countdown'
 import ShowFAQ from '@/components/ShowFAQ'
+import Link from 'next/link'
 import { Clock, Info } from 'lucide-react'
 
 const AVATAR_COLORS = [
@@ -41,12 +42,18 @@ interface Props {
   forumPostCount: number
   isVendor: boolean
   userId?: string
+  inventoryItems: { id: string; imageUrl: string; caption: string | null; user: { id: string; name: string; businessName: string | null } }[]
+}
+
+function bgRemovalUrl(url: string) {
+  if (!url.includes('cloudinary.com')) return url
+  return url.replace('/upload/', '/upload/e_background_removal/')
 }
 
 export default function ShowContent({
   showId, showSlug, showHostId, showDate, showCountdown,
   vendorMapUrl, logistics, vendors, schedule, faq,
-  forumPostCount, isVendor, userId,
+  forumPostCount, isVendor, userId, inventoryItems,
 }: Props) {
   const [view, setView] = useState<View>('details')
 
@@ -121,6 +128,35 @@ export default function ShowContent({
             </div>
           )}
 
+          {/* Featured Inventory */}
+          {inventoryItems.length > 0 && (
+            <div className="mb-8">
+              <h2 className="font-bold text-ps-text flex items-center gap-2 mb-4">
+                <span className="w-1 h-5 bg-ps-accent rounded-full inline-block" />
+                Featured Inventory
+                <span className="text-xs font-normal text-ps-muted">{inventoryItems.length} items from vendors</span>
+              </h2>
+              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                {inventoryItems.map(item => {
+                  const displayName = item.user.businessName || item.user.name
+                  return (
+                    <Link key={item.id} href={`/users/${item.user.id}`} className="group shrink-0">
+                      <div className="w-36 h-36 rounded-2xl overflow-hidden border border-ps-borderLight shadow-soft relative bg-white">
+                        <img
+                          src={bgRemovalUrl(item.imageUrl)}
+                          onError={(e) => { e.currentTarget.src = item.imageUrl }}
+                          alt={item.caption ?? 'Inventory'}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                      <p className="text-xs text-ps-muted mt-1.5 text-center truncate w-36">{displayName}</p>
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           <div className={`grid gap-8 ${hasRightCol ? 'md:grid-cols-5' : ''}`}>
 
             {/* ── VENDORS ── */}
@@ -144,24 +180,26 @@ export default function ShowContent({
                   {vendors.map((v) => {
                     const displayName = v.user.businessName || v.user.name
                     return (
-                      <div key={v.id} className="bg-white border border-ps-borderLight rounded-2xl p-4 shadow-soft flex items-start gap-3 hover:shadow-card transition-shadow">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 ${avatarColor(displayName)}`}>
-                          {displayName[0].toUpperCase()}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2 mb-0.5">
-                            <span className="font-semibold text-sm text-ps-text truncate">{displayName}</span>
-                            {v.tableNumber && (
-                              <span className="text-xs bg-ps-accent text-white font-bold px-2 py-0.5 rounded-full shrink-0">
-                                T{v.tableNumber}
-                              </span>
+                      <Link key={v.id} href={`/users/${v.user.id}`}>
+                        <div className="bg-white border border-ps-borderLight rounded-2xl p-4 shadow-soft flex items-start gap-3 hover:shadow-card transition-shadow">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 ${avatarColor(displayName)}`}>
+                            {displayName[0].toUpperCase()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2 mb-0.5">
+                              <span className="font-semibold text-sm text-ps-text truncate">{displayName}</span>
+                              {v.tableNumber && (
+                                <span className="text-xs bg-ps-accent text-white font-bold px-2 py-0.5 rounded-full shrink-0">
+                                  T{v.tableNumber}
+                                </span>
+                              )}
+                            </div>
+                            {v.user.bio && (
+                              <p className="text-xs text-ps-secondary leading-relaxed line-clamp-2">{v.user.bio}</p>
                             )}
                           </div>
-                          {v.user.bio && (
-                            <p className="text-xs text-ps-secondary leading-relaxed line-clamp-2">{v.user.bio}</p>
-                          )}
                         </div>
-                      </div>
+                      </Link>
                     )
                   })}
                 </div>

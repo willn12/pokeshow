@@ -27,7 +27,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ slug
   if (!show) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   if (show.hostId !== session.userId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const { name, location, date, description, flierUrl, vendorMapUrl, theme, bannerUrl, announcementBanner, showCountdown, schedule, logistics, faq } = await req.json()
+  const { name, location, date, description, flierUrl, vendorMapUrl, theme, bannerUrl, announcementBanner, showCountdown, schedule, logistics, faq, applicationsOpen } = await req.json()
 
   const updated = await prisma.show.update({
     where: { slug },
@@ -45,6 +45,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ slug
       ...(schedule !== undefined && { schedule }),
       ...(logistics !== undefined && { logistics }),
       ...(faq !== undefined && { faq }),
+      ...(applicationsOpen !== undefined && { applicationsOpen }),
     },
   })
   return NextResponse.json(updated)

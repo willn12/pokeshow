@@ -7,6 +7,8 @@ interface User {
   name: string
   businessName?: string | null
   bio?: string | null
+  profileImageUrl?: string | null
+  instagramHandle?: string | null
 }
 
 interface AuthContextType {

@@ -39,6 +39,9 @@ export default function Navbar() {
               <Link href="/dashboard" className="text-ps-secondary hover:text-ps-text transition-colors text-sm font-medium">
                 Dashboard
               </Link>
+              <Link href="/profile/edit" className="text-ps-secondary hover:text-ps-text transition-colors text-sm font-medium">
+                Profile
+              </Link>
               <Link href="/messages" className="text-ps-secondary hover:text-ps-text transition-colors">
                 <MessageCircle size={18} />
               </Link>
@@ -79,6 +82,7 @@ export default function Navbar() {
             <>
               <Link href="/shows/new" className="text-ps-text text-sm font-medium" onClick={() => setOpen(false)}>Host a Show</Link>
               <Link href="/dashboard" className="text-ps-text text-sm font-medium" onClick={() => setOpen(false)}>Dashboard</Link>
+              <Link href="/profile/edit" className="text-ps-text text-sm font-medium" onClick={() => setOpen(false)}>Profile</Link>
               <Link href="/messages" className="text-ps-text text-sm font-medium" onClick={() => setOpen(false)}>Messages</Link>
               <button onClick={handleLogout} className="text-left text-ps-secondary text-sm">Sign out</button>
             </>
