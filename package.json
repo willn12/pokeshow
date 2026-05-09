@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "node server.js",
     "postinstall": "prisma generate",
-    "build": "next build",
+    "build": "prisma migrate deploy && next build",
     "start": "NODE_ENV=production node server.js",
     "lint": "next lint",
     "db:migrate": "prisma migrate dev",
