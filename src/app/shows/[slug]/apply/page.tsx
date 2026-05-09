@@ -31,6 +31,11 @@ export default async function ApplyPage({ params }: { params: Promise<{ slug: st
 
   if (!user) redirect('/auth/login')
 
+  const tiers = await prisma.tableTier.findMany({
+    where: { showId: show.id },
+    orderBy: { sortOrder: 'asc' },
+  })
+
   if (existingRecord && (existingRecord.status === 'pending' || existingRecord.status === 'rejected')) {
     return (
       <div className="max-w-lg mx-auto py-16 text-center">
@@ -66,6 +71,14 @@ export default async function ApplyPage({ params }: { params: Promise<{ slug: st
         date: show.date ? show.date.toISOString() : null,
       }}
       user={user}
+      tiers={tiers.map((t) => ({
+        id: t.id,
+        name: t.name,
+        description: t.description,
+        price: t.price,
+        quantity: t.quantity,
+        color: t.color,
+      }))}
     />
   )
 }

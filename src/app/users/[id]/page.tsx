@@ -95,8 +95,8 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
           </div>
           <div className="p-6 grid grid-cols-3 sm:grid-cols-4 gap-3">
             {user.inventoryItems.map((item) => (
-              <div key={item.id} className="aspect-square rounded-2xl overflow-hidden border border-ps-borderLight shadow-soft">
-                <img src={item.imageUrl} alt={item.caption ?? 'Inventory'} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
+              <div key={item.id} className="aspect-[3/4] rounded-2xl overflow-hidden border border-ps-borderLight shadow-soft bg-ps-surface2 flex items-center justify-center">
+                <img src={item.imageUrl} alt={item.caption ?? 'Inventory'} className="w-full h-full object-contain hover:scale-105 transition-transform duration-300 p-1" />
               </div>
             ))}
           </div>

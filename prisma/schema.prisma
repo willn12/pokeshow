@@ -8,98 +8,121 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  password     String
-  name         String
+  id               String          @id @default(cuid())
+  email            String          @unique
+  password         String
+  name             String
   businessName     String?
   bio              String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
   profileImageUrl  String?
   instagramHandle  String?
-  createdAt        DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  hostedShows      Show[]
-  vendorShips      ShowVendor[]
+  receivedMessages DirectMessage[] @relation("ReceivedMessages")
+  sentMessages     DirectMessage[] @relation("SentMessages")
   forumPosts       ForumPost[]
   forumVotes       ForumVote[]
   inventoryItems   InventoryItem[]
-  sentMessages     DirectMessage[] @relation("SentMessages")
-  receivedMessages DirectMessage[] @relation("ReceivedMessages")
+  hostedShows      Show[]
+  vendorShips      ShowVendor[]
 }
 
 model Show {
-  id                 String    @id @default(cuid())
-  slug               String    @unique
-  name               String
-  location           String
-  date               DateTime?
-  description        String?
-  hostId             String
-  host               User      @relation(fields: [hostId], references: [id])
-  flierUrl           String?
-  bannerUrl          String?
-  vendorMapUrl       String?
-  published          Boolean   @default(true)
-  applicationsOpen   Boolean   @default(true)
-  applicationsOpenAt DateTime?
-  theme              String    @default("red")
-  announcementBanner String?
-  showCountdown      Boolean   @default(true)
-  schedule           Json?
-  logistics          String?
-  faq                Json?
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-
-  vendors    ShowVendor[]
-  forumPosts ForumPost[]
-  messages   DirectMessage[]
+  id                  String          @id @default(cuid())
+  slug                String          @unique
+  name                String
+  location            String
+  date                DateTime?
+  description         String?
+  hostId              String
+  flierUrl            String?
+  vendorMapUrl        String?
+  published           Boolean         @default(true)
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  applicationsOpenAt  DateTime?
+  announcementBanner  String?
+  faq                 Json?
+  logistics           String?
+  schedule            Json?
+  showCountdown       Boolean         @default(true)
+  theme               String          @default("red")
+  bannerUrl           String?
+  applicationsOpen    Boolean         @default(true)
+  ontreasureEventSlug String?
+  ontreasureUsername  String?
+  floorPlan           Json?
+  tagline             String?
+  socialLinks         Json?
+  venmoHandle         String?
+  contentBlocks       ContentBlock[]
+  messages            DirectMessage[]
+  forumPosts          ForumPost[]
+  host                User            @relation(fields: [hostId], references: [id])
+  vendors             ShowVendor[]
+  tableTiers          TableTier[]
 }
 
 model ShowVendor {
-  id                String   @id @default(cuid())
+  id                String     @id @default(cuid())
   showId            String
-  show              Show     @relation(fields: [showId], references: [id], onDelete: Cascade)
   userId            String
-  user              User     @relation(fields: [userId], references: [id])
-  status            String   @default("pending")
-  inviteToken       String?  @unique
+  status            String     @default("pending")
+  inviteToken       String?    @unique
   tableNumber       String?
-  inventoryType     String?
+  createdAt         DateTime   @default(now())
+  applicationNote   String?
   estimatedValue    Float?
   instagramUrl      String?
   websiteUrl        String?
-  applicationNote   String?
-  createdAt         DateTime @default(now())
+  tableTierId       String?
+  requestedQuantity Int        @default(1)
+  approvedQuantity  Int?
+  inventoryTypes    String[]   @default([])
+  show              Show       @relation(fields: [showId], references: [id], onDelete: Cascade)
+  tableTier         TableTier? @relation(fields: [tableTierId], references: [id])
+  user              User       @relation(fields: [userId], references: [id])
 
   @@unique([showId, userId])
 }
 
-model ForumPost {
-  id        String   @id @default(cuid())
-  showId    String
-  show      Show     @relation(fields: [showId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  content   String
-  tag       String   @default("general")
-  parentId  String?
-  parent    ForumPost?  @relation("Replies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies   ForumPost[] @relation("Replies")
-  createdAt DateTime @default(now())
+model TableTier {
+  id          String       @id @default(cuid())
+  showId      String
+  name        String
+  description String?
+  price       Float        @default(0)
+  quantity    Int          @default(0)
+  color       String       @default("gray")
+  sortOrder   Int          @default(0)
+  createdAt   DateTime     @default(now())
+  vendors     ShowVendor[]
+  show        Show         @relation(fields: [showId], references: [id], onDelete: Cascade)
+}
 
-  messages DirectMessage[]
-  votes    ForumVote[]
+model ForumPost {
+  id        String          @id @default(cuid())
+  showId    String
+  userId    String
+  content   String
+  createdAt DateTime        @default(now())
+  parentId  String?
+  tag       String          @default("general")
+  messages  DirectMessage[]
+  parent    ForumPost?      @relation("Replies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   ForumPost[]     @relation("Replies")
+  show      Show            @relation(fields: [showId], references: [id], onDelete: Cascade)
+  user      User            @relation(fields: [userId], references: [id])
+  votes     ForumVote[]
 }
 
 model ForumVote {
   id        String    @id @default(cuid())
   postId    String
-  post      ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
   userId    String
-  user      User      @relation(fields: [userId], references: [id])
   createdAt DateTime  @default(now())
+  post      ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id])
 
   @@unique([postId, userId])
 }
@@ -107,23 +130,35 @@ model ForumVote {
 model DirectMessage {
   id          String     @id @default(cuid())
   senderId    String
-  sender      User       @relation("SentMessages", fields: [senderId], references: [id])
   recipientId String
-  recipient   User       @relation("ReceivedMessages", fields: [recipientId], references: [id])
   showId      String
-  show        Show       @relation(fields: [showId], references: [id])
   forumPostId String?
-  forumPost   ForumPost? @relation(fields: [forumPostId], references: [id])
   content     String
   readAt      DateTime?
   createdAt   DateTime   @default(now())
+  forumPost   ForumPost? @relation(fields: [forumPostId], references: [id])
+  recipient   User       @relation("ReceivedMessages", fields: [recipientId], references: [id])
+  sender      User       @relation("SentMessages", fields: [senderId], references: [id])
+  show        Show       @relation(fields: [showId], references: [id])
 }
 
 model InventoryItem {
   id        String   @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   imageUrl  String
   caption   String?
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ContentBlock {
+  id        String   @id @default(cuid())
+  showId    String
+  type      String
+  title     String?
+  content   Json     @default("{}")
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  show      Show     @relation(fields: [showId], references: [id], onDelete: Cascade)
 }

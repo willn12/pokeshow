@@ -23,6 +23,10 @@ export function formatDate(date: string | Date) {
   })
 }
 
+export function displayName(user: { businessName?: string | null; name: string }): string {
+  return user.businessName || user.name
+}
+
 export function timeAgo(date: string | Date) {
   const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000)
   if (seconds < 60) return 'just now'

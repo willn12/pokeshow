@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSessionFromRequest } from '@/lib/auth'
+import { sendApprovalEmail, sendRejectionEmail, sendConfirmationEmail, sendApplicationReceivedEmail, sendInviteEmail } from '@/lib/email'
 import crypto from 'crypto'
 
 // GET all vendors for a show (host sees all statuses, public sees approved only)
@@ -13,23 +14,26 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
     if (!show) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
     const isHost = session?.userId === show.hostId
-    const vendors = await prisma.showVendor.findMany({
-      where: { showId: show.id, ...(isHost ? {} : { status: 'approved' }) },
-      include: {
-        user: { select: { id: true, name: true, businessName: true, bio: true, email: true } },
-      },
-      orderBy: { createdAt: 'asc' },
-    })
+    const [vendors, hostShows, tiers] = await Promise.all([
+      prisma.showVendor.findMany({
+        where: { showId: show.id, ...(isHost ? {} : { status: { in: ['approved', 'confirmed'] } }) },
+        include: {
+          user: { select: { id: true, name: true, businessName: true, bio: true, email: true } },
+          tableTier: { select: { id: true, name: true, color: true, price: true } },
+        },
+        orderBy: { createdAt: 'asc' },
+      }),
+      prisma.show.findMany({
+        where: { hostId: show.hostId, id: { not: show.id } },
+        select: { id: true },
+      }),
+      prisma.tableTier.findMany({
+        where: { showId: show.id },
+        orderBy: { sortOrder: 'asc' },
+      }),
+    ])
 
-    // Compute pastShowCount for each vendor: how many OTHER shows by THIS host
-    // they've been an approved vendor at
     const vendorIds = vendors.map((v) => v.userId)
-
-    // Fetch all approved vendor records for this host's other shows, for any of these users
-    const hostShows = await prisma.show.findMany({
-      where: { hostId: show.hostId, id: { not: show.id } },
-      select: { id: true },
-    })
     const hostShowIds = hostShows.map((s) => s.id)
 
     let pastShowCountMap: Record<string, number> = {}
@@ -39,7 +43,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
         where: {
           userId: { in: vendorIds },
           showId: { in: hostShowIds },
-          status: 'approved',
+          status: { in: ['approved', 'confirmed'] },
         },
         _count: { userId: true },
       })
@@ -55,6 +59,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
 
     return NextResponse.json({
       vendors: enrichedVendors,
+      tiers,
       show: { createdAt: show.createdAt, applicationsOpenAt: show.applicationsOpenAt },
     })
   } catch (err) {
@@ -77,10 +82,58 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
 
     // Host updating a vendor status
     if (session.userId === show.hostId && body.vendorId && body.status) {
+      const updateData: Record<string, unknown> = { status: body.status }
+      if (body.tableNumber !== undefined) updateData.tableNumber = body.tableNumber || null
+      if (body.tableTierId !== undefined) updateData.tableTierId = body.tableTierId || null
+      if (body.approvedQuantity !== undefined) updateData.approvedQuantity = body.approvedQuantity ? Number(body.approvedQuantity) : null
       const updated = await prisma.showVendor.update({
         where: { id: body.vendorId },
-        data: { status: body.status, tableNumber: body.tableNumber },
+        data: updateData,
+        include: {
+          user: { select: { email: true, name: true, businessName: true } },
+          tableTier: { select: { name: true, price: true } },
+        },
       })
+
+      const emailStatus = body.status as string
+      const vendorName = updated.user.businessName || updated.user.name
+      const approvedQty = updated.approvedQuantity ?? updated.requestedQuantity
+      const totalPrice = updated.tableTier ? updated.tableTier.price * approvedQty : 0
+      if (emailStatus === 'approved') {
+        sendApprovalEmail({
+          to: updated.user.email,
+          vendorName,
+          showName: show.name,
+          showDate: show.date?.toISOString() ?? null,
+          showLocation: show.location,
+          showSlug: show.slug,
+          tierName: updated.tableTier?.name ?? null,
+          quantity: approvedQty,
+          tableNumber: updated.tableNumber,
+          totalPrice,
+          venmoHandle: show.venmoHandle ?? null,
+        }).catch(console.error)
+      } else if (emailStatus === 'rejected') {
+        sendRejectionEmail({
+          to: updated.user.email,
+          vendorName,
+          showName: show.name,
+          showSlug: show.slug,
+        }).catch(console.error)
+      } else if (emailStatus === 'confirmed') {
+        sendConfirmationEmail({
+          to: updated.user.email,
+          vendorName,
+          showName: show.name,
+          showDate: show.date?.toISOString() ?? null,
+          showLocation: show.location,
+          showSlug: show.slug,
+          tierName: updated.tableTier?.name ?? null,
+          quantity: approvedQty,
+          tableNumber: updated.tableNumber,
+        }).catch(console.error)
+      }
+
       return NextResponse.json(updated)
     }
 
@@ -90,20 +143,40 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     })
     if (existing) return NextResponse.json({ error: 'Already applied' }, { status: 409 })
 
-    const { inventoryType, estimatedValue, instagramUrl, websiteUrl, applicationNote } = body
+    const { inventoryTypes, requestedQuantity, estimatedValue, instagramUrl, websiteUrl, applicationNote, tableTierId } = body
 
+    const appliedQty = requestedQuantity ? Math.max(1, Number(requestedQuantity)) : 1
     const vendor = await prisma.showVendor.create({
       data: {
         showId: show.id,
         userId: session.userId,
         status: 'pending',
-        inventoryType: inventoryType ?? null,
+        inventoryTypes: Array.isArray(inventoryTypes) ? inventoryTypes : [],
+        requestedQuantity: appliedQty,
         estimatedValue: estimatedValue != null ? Number(estimatedValue) : null,
         instagramUrl: instagramUrl ?? null,
         websiteUrl: websiteUrl ?? null,
         applicationNote: applicationNote ?? null,
+        tableTierId: tableTierId ?? null,
+      },
+      include: {
+        user: { select: { email: true, name: true, businessName: true } },
+        tableTier: { select: { name: true } },
       },
     })
+
+    const vendorName = vendor.user.businessName || vendor.user.name
+    sendApplicationReceivedEmail({
+      to: vendor.user.email,
+      vendorName,
+      showName: show.name,
+      showDate: show.date?.toISOString() ?? null,
+      showLocation: show.location,
+      showSlug: show.slug,
+      tierName: vendor.tableTier?.name ?? null,
+      requestedQuantity: appliedQty,
+    }).catch(console.error)
+
     return NextResponse.json(vendor, { status: 201 })
   } catch (err) {
     console.error('POST /vendors error', err)
@@ -118,7 +191,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ slug
     const session = getSessionFromRequest(req)
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const show = await prisma.show.findUnique({ where: { slug } })
+    const show = await prisma.show.findUnique({
+      where: { slug },
+      include: { host: { select: { name: true, businessName: true } } },
+    })
     if (!show) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     if (show.hostId !== session.userId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
@@ -136,8 +212,20 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ slug
       data: { showId: show.id, userId: user.id, status: 'invited', inviteToken },
     })
 
-    // In production, send an email here. For local dev, return the token.
-    return NextResponse.json({ vendor, inviteToken, message: `Invite token for ${email}: ${inviteToken}` }, { status: 201 })
+    const hostName = show.host?.businessName || show.host?.name || 'Show Host'
+    const vendorName = user.businessName || user.name
+    sendInviteEmail({
+      to: user.email,
+      vendorName,
+      showName: show.name,
+      showDate: show.date?.toISOString() ?? null,
+      showLocation: show.location,
+      showSlug: show.slug,
+      hostName,
+      inviteToken,
+    }).catch(console.error)
+
+    return NextResponse.json({ vendor, message: `Invite sent to ${email}` }, { status: 201 })
   } catch (err) {
     console.error('PUT /vendors error', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

@@ -225,11 +225,11 @@ export default function ProfileEditPage() {
           {items.length > 0 && (
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-5">
               {items.map(item => (
-                <div key={item.id} className="relative group aspect-square">
+                <div key={item.id} className="relative group aspect-[3/4] bg-ps-surface2 rounded-2xl border border-ps-borderLight flex items-center justify-center overflow-hidden">
                   <img
                     src={item.imageUrl}
                     alt={item.caption ?? 'Inventory item'}
-                    className="w-full h-full object-cover rounded-2xl border border-ps-borderLight"
+                    className="w-full h-full object-contain p-1"
                   />
                   <button
                     type="button"

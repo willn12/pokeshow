@@ -1,0 +1,14 @@
+CREATE TABLE "ContentBlock" (
+  "id" TEXT NOT NULL,
+  "showId" TEXT NOT NULL,
+  "type" TEXT NOT NULL,
+  "title" TEXT,
+  "content" JSONB NOT NULL DEFAULT '{}',
+  "sortOrder" INTEGER NOT NULL DEFAULT 0,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "ContentBlock_pkey" PRIMARY KEY ("id")
+);
+
+ALTER TABLE "ContentBlock" ADD CONSTRAINT "ContentBlock_showId_fkey"
+  FOREIGN KEY ("showId") REFERENCES "Show"("id") ON DELETE CASCADE ON UPDATE CASCADE;

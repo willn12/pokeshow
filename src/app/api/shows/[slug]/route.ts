@@ -9,7 +9,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ slu
     include: {
       host: { select: { id: true, name: true, email: true } },
       vendors: {
-        where: { status: 'approved' },
+        where: { status: { in: ['approved', 'confirmed'] } },
         include: { user: { select: { id: true, name: true, businessName: true, bio: true } } },
       },
     },
@@ -27,7 +27,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ slug
   if (!show) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   if (show.hostId !== session.userId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const { name, location, date, description, flierUrl, vendorMapUrl, theme, bannerUrl, announcementBanner, showCountdown, schedule, logistics, faq, applicationsOpen } = await req.json()
+  const {
+    name, location, date, description, flierUrl, vendorMapUrl,
+    theme, bannerUrl, announcementBanner, showCountdown,
+    schedule, logistics, faq, applicationsOpen,
+    ontreasureEventSlug, ontreasureUsername,
+    tagline, socialLinks, venmoHandle, floorPlan,
+  } = await req.json()
 
   const updated = await prisma.show.update({
     where: { slug },
@@ -46,6 +52,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ slug
       ...(logistics !== undefined && { logistics }),
       ...(faq !== undefined && { faq }),
       ...(applicationsOpen !== undefined && { applicationsOpen }),
+      ...(ontreasureEventSlug !== undefined && { ontreasureEventSlug: ontreasureEventSlug || null }),
+      ...(ontreasureUsername !== undefined && { ontreasureUsername: ontreasureUsername || null }),
+      ...(tagline !== undefined && { tagline: tagline || null }),
+      ...(socialLinks !== undefined && { socialLinks }),
+      ...(venmoHandle !== undefined && { venmoHandle: venmoHandle?.replace(/^@/, '').trim() || null }),
+      ...(floorPlan !== undefined && { floorPlan }),
     },
   })
   return NextResponse.json(updated)
